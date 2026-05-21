@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Max Construction Complete App v2.1</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen pb-12">
+
+    <header class="bg-slate-800 text-white p-4 shadow-md sticky top-0 z-10">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-md font-bold text-amber-400">🏗️ MAX ENTERPRISE V2</h1>
+                <p class="text-xs text-slate-400">ระบบคำนวณ & บริหารต้นทุน</p>
+            </div>
+            <select id="projectSelect" onchange="switchProject()" class="bg-slate-700 text-white text-xs p-2 rounded-lg border border-slate-600 outline-none">
+                <option value="p1">🛣️ งานทาง หลวงแพ่ง</option>
+                <option value="p2">🏠 หมู่บ้าน แกรนด์วิลล์</option>
+                <option value="p3">🏢 อาคารพาณิชย์ บางนา</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="max-w-md mx-auto p-4 space-y-5">
+        
+        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 shadow-sm">
+            <h3 class="text-xs font-bold text-emerald-800 mb-1.5 flex items-center gap-1">
+                💬 LINE Sync (ข้อมูลล่าสุดจากกลุ่มไลน์)
+            </h3>
+            <div class="bg-white p-3 rounded-xl border border-emerald-100 text-xs text-gray-600">
+                <p class="font-semibold text-emerald-700">ช่างแจ็ค (หน้างาน): <span class="font-normal text-gray-600">"ซื้อปูนเพิ่ม 10 ถุง 1500 บาท"</span></p>
+                <button onclick="importFromLine()" class="mt-2 w-full bg-emerald-600 text-white p-2 rounded-lg font-bold hover:bg-emerald-700 transition">
+                    📥 ดึงเข้าบัญชีโปรเจกต์นี้
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <h2 class="text-md font-bold text-gray-800 mb-3 flex items-center gap-1">📐 1. คำนวณปริมาณวัสดุงานทาง</h2>
+            <div class="space-y-3 text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">กว้าง (เมตร)</label>
+                        <input type="number" id="width" value="4.5" oninput="calculateMaterials()" class="w-full p-2.5 border border-gray-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ยาว (เมตร)</label>
+                        <input type="number" id="length" value="40" oninput="calculateMaterials()" class="w-full p-2.5 border border-gray-300 rounded-xl">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">ทราย (ซม.)</label>
+                        <input type="number" id="sandThick" value="0" oninput="calculateMaterials()" class="w-full p-2.5 border border-gray-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">หินคลุก (ซม.)</label>
+                        <input type="number" id="stoneThick" value="10" oninput="calculateMaterials()" class="w-full p-2.5 border border-gray-300 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1">แอสฟัลต์ (ซม.)</label>
+                        <input type="number" id="asphaltThick" value="5" oninput="calculateMaterials()" class="w-full p-2.5 border border-gray-300 rounded-xl">
+                    </div>
+                </div>
+
+                <details class="bg-gray-50 p-2.5 rounded-xl border border-gray-200">
+                    <summary class="text-xs text-gray-600 font-semibold cursor-pointer">⚙️ ตั้งค่าความหนาแน่นวัสดุ (ตัน/ลบ.ม.)</summary>
+                    <div class="grid grid-cols-3 gap-2 mt-2">
+                        <div>
+                            <label class="text-[10px] text-gray-500">ทรายบด</label>
+                            <input type="number" id="dnsSand" value="1.4" step="0.1" oninput="calculateMaterials()" class="w-full p-1.5 bg-white border rounded-md text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500">หินคลุก</label>
+                            <input type="number" id="dnsStone" value="2.2" step="0.1" oninput="calculateMaterials()" class="w-full p-1.5 bg-white border rounded-md text-xs">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-500">แอสฟัลต์</label>
+                            <input type="number" id="dnsAsphalt" value="2.4" step="0.1" oninput="calculateMaterials()" class="w-full p-1.5 bg-white border rounded-md text-xs">
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 space-y-2 text-xs">
+                <div class="font-bold text-gray-700">พื้นที่รวม: <span id="resArea">180</span> ตร.ม.</div>
+                <div class="flex justify-between bg-amber-50 p-2 rounded-lg text-amber-800">
+                    <span>⏳ ทรายบดอัด:</span> <span class="font-bold"><span id="resSand">0.00</span> ตัน</span>
+                </div>
+                <div class="flex justify-between bg-blue-50 p-2 rounded-lg text-blue-800">
+                    <span>🪨 หินคลุก:</span> <span class="font-bold"><span id="resStone">39.60</span> ตัน</span>
+                </div>
+                <div class="flex justify-between bg-slate-100 p-2 rounded-lg text-slate-800">
+                    <span>🖤 แอสฟัลต์คอนกรีต:</span> <span class="font-bold"><span id="resAsphalt">21.60</span> ตัน</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+            <h2 class="text-md font-bold text-gray-800 mb-3" id="formHeader">📝 2. บันทึกต้นทุนโครงการ</h2>
+            <div class="space-y-3 text-sm">
+                <input type="hidden" id="editIndex" value="-1">
+                <input type="text" id="itemName" placeholder="ชื่อรายการ / ค่าใช้จ่าย" class="w-full p-2.5 border border-gray-300 rounded-xl outline-none">
+                <input type="number" id="itemAmount" placeholder="จำนวนเงิน (บาท)" class="w-full p-2.5 border border-gray-300 rounded-xl outline-none">
+                
+                <div class="flex gap-2">
+                    <button onclick="saveData()" id="btnSave" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl shadow-sm transition">
+                        💾 บันทึกข้อมูล
+                    </button>
+                    <button onclick="cancelEdit()" id="btnCancel" class="hidden bg-gray-400 text-white font-bold p-3 rounded-xl shadow-sm transition">
+                        ยกเลิก
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pdfReport" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 bg-white">
+            <div class="text-center border-b border-gray-200 pb-3 mb-4">
+                <h2 class="text-md font-bold text-gray-800" id="reportTitle">รายงานต้นทุน: งานทาง หลวงแพ่ง</h2>
+                <p class="text-[10px] text-gray-400">วันที่พิมพ์: <span id="reportDate"></span></p>
+            </div>
+            
+            <div class="space-y-2" id="reportItems"></div>
+            
+            <div class="mt-4 pt-3 border-t-2 border-dashed border-gray-200 flex justify-between font-bold text-sm text-gray-900">
+                <span>ยอดรวมต้นทุนทั้งหมด:</span>
+                <span class="text-emerald-600" id="projectTotal">0 บาท</span>
+            </div>
+        </div>
+
+        <button onclick="exportToPDF()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold p-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition text-sm">
+            📄 ดาวน์โหลดรายงานโครงการ (PDF)
+        </button>
+
+    </div>
+
+    <script>
+        // ข้อมูลหลักภายในโครงข่ายจำลองแยกแต่ละโครงการ
+        let projectData = {
+            p1: { title: "รายงานต้นทุน: งานทาง หลวงแพ่ง", items: [{n: "ค่าหินคลุก (รถพ่วง)", a: 24000}] },
+            p2: { title: "รายงานต้นทุน: หมู่บ้าน แกรนด์วิลล์", items: [{n: "ค่าเสาเข็มไอ", a: 85000}] },
+            p3: { title: "รายงานต้นทุน: อาคารพาณิชย์ บางนา", items: [{n: "ค่าพิมพ์เขียวแบบแปลน", a: 3500}] }
+        };
+
+        // ฟังก์ชันคำนวณสัดส่วนวัสดุ
+        function calculateMaterials() {
+            const w = parseFloat(document.getElementById('width').value) || 0;
+            const l = parseFloat(document.getElementById('length').value) || 0;
+            const area = w * l;
+            document.getElementById('resArea').innerText = area.toLocaleString();
+
+            const sThick = (parseFloat(document.getElementById('sandThick').value) || 0) / 100;
+            const stThick = (parseFloat(document.getElementById('stoneThick').value) || 0) / 100;
+            const aThick = (parseFloat(document.getElementById('asphaltThick').value) || 0) / 100;
+
+            const dSand = parseFloat(document.getElementById('dnsSand').value) || 1.4;
+            const dStone = parseFloat(document.getElementById('dnsStone').value) || 2.2;
+            const dAsphalt = parseFloat(document.getElementById('dnsAsphalt').value) || 2.4;
+
+            document.getElementById('resSand').innerText = (area * sThick * dSand).toFixed(2);
+            document.getElementById('resStone').innerText = (area * stThick * dStone).toFixed(2);
+            document.getElementById('resAsphalt').innerText = (area * aThick * dAsphalt).toFixed(2);
+        }
+
+        // ฟังก์ชันสลับการจัดแสดงโปรเจกต์
+        function switchProject() {
+            const pId = document.getElementById('projectSelect').value;
+            const data = projectData[pId];
+            document.getElementById('reportTitle').innerText = data.title;
+            
+            const itemsContainer = document.getElementById('reportItems');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            data.items.forEach((item, index) => {
+                total += item.a;
+                itemsContainer.innerHTML += `
+                    <div class="flex justify-between items-center text-xs p-3 bg-gray-50 rounded-lg border border-gray-200 shadow-sm">
+                        <div class="flex-1">
+                            <span class="font-bold text-gray-800 text-sm block mb-1">${item.n}</span>
+                            <span class="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">${item.a.toLocaleString()} บาท</span>
+                        </div>
+                        <div class="flex gap-1.5 ml-2">
+                            <button onclick="editItem(${index})" class="text-blue-600 bg-blue-100 px-2.5 py-1.5 rounded-lg font-bold hover:bg-blue-200 transition">✏️ แก้ไข</button>
+                            <button onclick="deleteItem(${index})" class="text-rose-600 bg-rose-100 px-2.5 py-1.5 rounded-lg font-bold hover:bg-rose-200 transition">❌ ลบ</button>
+                        </div>
+                    </div>`;
+            });
+            
+            document.getElementById('projectTotal').innerText = total.toLocaleString() + " บาท";
+            cancelEdit();
+        }
+
+        // ฟังก์ชันบันทึกและแก้ไขข้อมูลอย่างถูกต้อง
+        function saveData() {
+            const name = document.getElementById('itemName').value.trim();
+            const amount = parseFloat(document.getElementById('itemAmount').value) || 0;
+            const pId = document.getElementById('projectSelect').value;
+            const editIndex = parseInt(document.getElementById('editIndex').value);
+
+            if (!name || amount <= 0) {
+                alert("กรุณากรอกชื่อรายการและจำนวนเงินที่ถูกต้องก่อนกดบันทึกครับ");
+                return;
+            }
+
+            if (editIndex === -1) {
+                // บันทึกรายการใหม่ลงโครงการ
+                projectData[pId].items.push({n: name, a: amount});
+            } else {
+                // บันทึกทับตัวเดิมในดัชนีที่เลือก
+                projectData[pId].items[editIndex] = {n: name, a: amount};
+            }
+            
+            switchProject();
+            cancelEdit();
+        }
+
+        // ฟังก์ชันแก้ไขข้อมูลบิลรายตัว
+        function editItem(index) {
+            const pId = document.getElementById('projectSelect').value;
+            const item = projectData[pId].items[index];
+            
+            document.getElementById('itemName').value = item.n;
+            document.getElementById('itemAmount').value = item.a;
+            document.getElementById('editIndex').value = index;
+            
+            document.getElementById('formHeader').innerText = "✏️ แก้ไขข้อมูลรายการต้นทุน";
+            document.getElementById('btnSave').innerText = "✅ ยืนยันการแก้ไข";
+            document.getElementById('btnSave').className = "flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold p-3 rounded-xl shadow-sm transition";
+            document.getElementById('btnCancel').className = "block bg-gray-400 text-white font-bold p-3 rounded-xl shadow-sm transition";
+        }
+
+        // ฟังก์ชันลบข้อมูลบิลรายตัว
+        function deleteItem(index) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายการต้นทุนนี้ออกจากระบบ?")) {
+                const pId = document.getElementById('projectSelect').value;
+                projectData[pId].items.splice(index, 1);
+                switchProject();
+            }
+        }
+
+        // ฟังก์ชันยกเลิกโหมดแก้ไขข้อมูล
+        function cancelEdit() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemAmount').value = '';
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('formHeader').innerText = "📝 2. บันทึกต้นทุนโครงการ";
+            document.getElementById('btnSave').innerText = "💾 บันทึกข้อมูล";
+            document.getElementById('btnSave').className = "flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold p-3 rounded-xl shadow-sm transition";
+            document.getElementById('btnCancel').className = "hidden";
+        }
+
+        // ฟังก์ชันจำลองการดึงข้อมูลไลน์
+        function importFromLine() {
+            const pId = document.getElementById('projectSelect').value;
+            projectData[pId].items.push({n: "ปูนถุง (Sync จาก LINE)", a: 1500});
+            switchProject();
+        }
+
+        // ฟังก์ชัน Export PDF ตรวจทานเพื่อป้องกันแอปค้างบนมือถือแล้ว
+        function exportToPDF() {
+            const element = document.getElementById('pdfReport');
+            const pId = document.getElementById('projectSelect').value;
+            const title = projectData[pId].title;
+            
+            const opt = {
+                margin:       10,
+                filename:     title + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // รันข้อมูลแรกเริ่ม
+        window.onload = function() {
+            calculateMaterials();
+            switchProject();
+            document.getElementById('reportDate').innerText = new Date().toLocaleDateString('th-TH');
+        }
+    </script>
+</body>
+</html>

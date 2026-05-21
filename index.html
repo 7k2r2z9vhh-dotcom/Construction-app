@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NITHIS 2568 CO., LTD. - Operational Hub v3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-24 text-slate-800 select-none">
+
+    <header class="bg-slate-900 text-white p-4 shadow-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-md font-bold tracking-wider text-amber-400">NITHIS 2568 CO., LTD.</h1>
+                <p class="text-[10px] text-slate-400 font-medium tracking-tight">CONSTRUCTION MANAGEMENT SYSTEM</p>
+            </div>
+            <select id="projectSelect" onchange="switchProject()" class="bg-slate-800 text-white text-xs px-3 py-2 rounded-xl border border-slate-700 outline-none font-semibold shadow-inner">
+                <option value="p1">🛣️ Luang Phaeng Road Project</option>
+                <option value="p2">🏠 Grand Ville Housing Project</option>
+                <option value="p3">🏢 Bangna Commercial Building</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="bg-slate-800 text-slate-300 text-[11px] font-bold py-1.5 px-4 shadow-sm border-b border-slate-700">
+        <div class="max-w-md mx-auto flex justify-between items-center">
+            <span>📅 PROJECT DOB:</span>
+            <span id="globalDobDisplay" class="text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">Loading...</span>
+        </div>
+    </div>
+
+    <main class="max-w-md mx-auto p-4">
+        
+        <section id="win-calculator" class="tab-window space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                    <span class="text-xl">📐</span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Material Calculator</h2>
+                        <p class="text-[10px] text-slate-400">Calculate asphalt, stone, and sand layers</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4 text-xs">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-slate-500 font-semibold mb-1">Width (Meters)</label>
+                            <input type="number" id="width" value="4.5" oninput="calculateMaterials()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-slate-500 font-semibold mb-1">Length (Meters)</label>
+                            <input type="number" id="length" value="40" oninput="calculateMaterials()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[11px] text-slate-500 font-semibold mb-1">Sand (Cm)</label>
+                            <input type="number" id="sandThick" value="0" oninput="calculateMaterials()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-500 font-semibold mb-1">Stone (Cm)</label>
+                            <input type="number" id="stoneThick" value="10" oninput="calculateMaterials()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-500 font-semibold mb-1">Asphalt (Cm)</label>
+                            <input type="number" id="asphaltThick" value="5" oninput="calculateMaterials()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                        </div>
+                    </div>
+
+                    <details class="bg-slate-50 p-3 rounded-xl border border-slate-200/60">
+                        <summary class="text-xs text-slate-600 font-bold cursor-pointer select-none">⚙️ Core Configurations & Densities</summary>
+                        <div class="space-y-3 mt-3 border-t border-slate-200/60 pt-3">
+                            <div>
+                                <label class="text-[10px] text-slate-500 font-bold block mb-1">Change Project DOB (Commencement Date)</label>
+                                <input type="date" id="dobInput" onchange="updateProjectDob()" class="w-full p-2.5 bg-white border border-slate-200 rounded-lg font-semibold">
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-0.5">Sand (T/M³)</label>
+                                    <input type="number" id="dnsSand" value="1.4" step="0.1" oninput="calculateMaterials()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-center font-bold">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-0.5">Stone (T/M³)</label>
+                                    <input type="number" id="dnsStone" value="2.2" step="0.1" oninput="calculateMaterials()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-center font-bold">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-slate-400 block mb-0.5">Asphalt (T/M³)</label>
+                                    <input type="number" id="dnsAsphalt" value="2.4" step="0.1" oninput="calculateMaterials()" class="w-full p-2 bg-white border border-slate-200 rounded-lg text-center font-bold">
+                                </div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 text-white p-5 rounded-2xl shadow-md space-y-3">
+                <div class="text-xs font-bold tracking-wider text-slate-400 uppercase">Calculation Results</div>
+                <div class="text-lg font-bold border-b border-slate-800 pb-2">Total Area: <span id="resArea" class="text-amber-400">180</span> Sq.M.</div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-400">⏳ Sand Compaction:</span>
+                        <span class="font-bold text-amber-500"><span id="resSand">0.00</span> Tons</span>
+                    </div>
+                    <div class="flex justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-400">🪨 Crushed Stone:</span>
+                        <span class="font-bold text-blue-400"><span id="resStone">39.60</span> Tons</span>
+                    </div>
+                    <div class="flex justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                        <span class="text-slate-400">🖤 Asphalt Concrete:</span>
+                        <span class="font-bold text-emerald-400"><span id="resAsphalt">21.60</span> Tons</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="win-costs" class="tab-window space-y-4 hidden">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-2">
+                    <span class="text-xl" id="formIcon">📝</span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide" id="formHeader">Financial Cost Log</h2>
+                        <p class="text-[10px] text-slate-400">Record material invoices or general site costs</p>
+                    </div>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <input type="hidden" id="editIndex" value="-1">
+                    <div>
+                        <label class="block text-slate-500 font-semibold mb-1">Item Description / Expense Name</label>
+                        <input type="text" id="itemName" placeholder="e.g., Subbase Material Truck, Diesel Fuel" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-medium focus:bg-white focus:border-blue-500 transition outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-semibold mb-1">Amount Cost (THB)</label>
+                        <input type="number" id="itemAmount" placeholder="0.00" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold focus:bg-white focus:border-blue-500 transition outline-none">
+                    </div>
+                    
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="saveData()" id="btnSave" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold p-3.5 rounded-xl shadow-sm transition text-xs uppercase tracking-wider">
+                            💾 Save Cost Record
+                        </button>
+                        <button onclick="cancelEdit()" id="btnCancel" class="hidden bg-slate-400 text-white font-bold p-3.5 rounded-xl text-xs uppercase">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                    <span class="text-xl">👷</span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Daily Manpower Attendance</h2>
+                        <p class="text-[10px] text-slate-400">Log workers on-site today to automatically add to cost</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <label class="block text-slate-500 font-semibold mb-1">Number of Workers</label>
+                        <input type="number" id="workerHeadcount" value="5" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-slate-500 font-semibold mb-1">Daily Rate (THB / Head)</label>
+                        <input type="number" id="workerRate" value="500" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg font-bold">
+                    </div>
+                </div>
+                <button onclick="logLaborCost()" class="w-full mt-3 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold text-xs uppercase tracking-wider transition">
+                    ➕ Inject Labor Wage to Report
+                </button>
+            </div>
+        </section>
+
+        <section id="win-camera" class="tab-window space-y-4 hidden">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center gap-2 mb-3 border-b border-slate-100 pb-2">
+                    <span class="text-xl">📷</span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wide">Visual Site Feed</h2>
+                        <p class="text-[10px] text-slate-400">Only live and accessible when viewing this window</p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-xl overflow-hidden relative aspect-video border border-slate-800 shadow-inner flex items-center justify-center">
+                    <video id="cameraVideo" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+                    <div id="cameraPlaceholder" class="text-slate-500 text-xs text-center p-4">
+                        <span class="text-2xl block mb-2">🔒</span>
+                        Camera is isolated & offline.<br>Press start to check asphalt compaction layout.
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <button onclick="startCamera()" class="bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition uppercase">
+                        🎥 Open Camera
+                    </button>
+                    <button onclick="stopCamera()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 p-3 rounded-xl font-bold transition uppercase">
+                        🛑 Turn Off
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="win-report" class="tab-window space-y-4 hidden">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm text-xs">
+                <div class="flex justify-between font-bold text-slate-700 mb-1">
+                    <span class="uppercase tracking-wide">🚧 Infrastructure Site Progress:</span>
+                    <span id="progressText" class="text-blue-600">50% Complete</span>
+                </div>
+                <input type="range" id="progressRange" min="0" max="100" value="50" oninput="updateProgressBar()" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            </div>
+
+            <div id="pdfReport" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-center border-b border-slate-200 pb-4 mb-4">
+                    <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">NITHIS 2568 CO., LTD.</h2>
+                    <h3 class="text-xs font-bold text-slate-600 mt-1" id="reportTitle">Operational Ledger</h3>
+                    <p class="text-[9px] text-slate-500 mt-1 bg-slate-100 py-1 rounded inline-block px-3 font-semibold">
+                        PROJECT DOB: <span id="reportProjectDob"></span>
+                    </p>
+                    <p class="text-[9px] text-slate-400 mt-1 font-medium">Export Date: <span id="reportDate"></span></p>
+                </div>
+                
+                <div class="space-y-2 min-h-24" id="reportItems"></div>
+                
+                <div class="mt-5 pt-3 border-t-2 border-dashed border-slate-300 flex justify-between items-center font-bold text-xs text-slate-900 uppercase tracking-wide">
+                    <span>Total Project Budget Spent:</span>
+                    <span class="text-emerald-600 text-sm bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60" id="projectTotal">0 THB</span>
+                </div>
+            </div>
+
+            <button onclick="exportToPDF()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold p-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 transition text-xs uppercase tracking-wider">
+                📄 Export Operations Report as PDF
+            </button>
+        </section>
+
+    </main>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 shadow-2xl py-2 px-1 z-50">
+        <div class="max-w-md mx-auto flex justify-between items-center text-[10px] font-bold text-slate-400">
+            <button onclick="openTab('calculator')" id="nav-calculator" class="flex-1 flex flex-col items-center gap-1 py-1 text-amber-400 transition-colors">
+                <span class="text-md">📐</span>
+                <span>Calc</span>
+            </button>
+            <button onclick="openTab('costs')" id="nav-costs" class="flex-1 flex flex-col items-center gap-1 py-1 hover:text-white transition-colors">
+                <span class="text-md">📝</span>
+                <span>Operations</span>
+            </button>
+            <button onclick="openTab('camera')" id="nav-camera" class="flex-1 flex flex-col items-center gap-1 py-1 hover:text-white transition-colors">
+                <span class="text-md">📷</span>
+                <span>Camera</span>
+            </button>
+            <button onclick="openTab('report')" id="nav-report" class="flex-1 flex flex-col items-center gap-1 py-1 hover:text-white transition-colors">
+                <span class="text-md">📄</span>
+                <span>Report Dashboard</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        let projectData = {
+            p1: { title: "Cost Report: Luang Phaeng Road Project", dob: "2026-03-12", progress: "65", items: [{n: "Crushed Stone Base Course", a: 24000}] },
+            p2: { title: "Cost Report: Grand Ville Housing Project", dob: "2026-04-05", progress: "30", items: [{n: "Subgrade Sand Tonnage", a: 12500}] },
+            p3: { title: "Cost Report: Bangna Commercial Building", dob: "2026-05-18", progress: "90", items: [{n: "Asphalt Surfacing Layer", a: 45000}] }
+        };
+
+        let activeStream = null;
+
+        // 1. WINDOW SEPARATED TAB MANAGER
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-window').forEach(win => win.classList.add('hidden'));
+            document.getElementById('win-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('text-amber-400'));
+            document.getElementById('nav-' + tabId).classList.add('text-amber-400');
+            
+            if (tabId !== 'camera') { stopCamera(); }
+        }
+
+        // 2. HARDWARE CAMERA SECURITY PRIVACY PROTECTION
+        document.addEventListener("visibilitychange", function() {
+            if (document.hidden) { stopCamera(); }
+        });
+
+        // 3. ROAD ENGINEERING MATERIAL CALCULATION FORMULAS
+        function calculateMaterials() {
+            const w = parseFloat(document.getElementById('width').value) || 0;
+            const l = parseFloat(document.getElementById('length').value) || 0;
+            const area = w * l;
+            document.getElementById('resArea').innerText = area.toLocaleString();
+
+            const sThick = (parseFloat(document.getElementById('sandThick').value) || 0) / 100;
+            const stThick = (parseFloat(document.getElementById('stoneThick').value) || 0) / 100;
+            const aThick = (parseFloat(document.getElementById('asphaltThick').value) || 0) / 100;
+
+            const dSand = parseFloat(document.getElementById('dnsSand').value) || 1.4;
+            const dStone = parseFloat(document.getElementById('dnsStone').value) || 2.2;
+            const dAsphalt = parseFloat(document.getElementById('dnsAsphalt').value) || 2.4;
+
+            document.getElementById('resSand').innerText = (area * sThick * dSand).toFixed(2);
+            document.getElementById('resStone').innerText = (area * stThick * dStone).toFixed(2);
+            document.getElementById('resAsphalt').innerText = (area * aThick * dAsphalt).toFixed(2);
+        }
+
+        // 4. DOB TIME DYNAMICS CONTROL
+        function updateProjectDob() {
+            const pId = document.getElementById('projectSelect').value;
+            const newDob = document.getElementById('dobInput').value;
+            if(newDob) {
+                projectData[pId].dob = newDob;
+                // Instant update across the whole ecosystem
+                document.getElementById('globalDobDisplay').innerText = formatDateString(newDob);
+                document.getElementById('reportProjectDob').innerText = formatDateString(newDob);
+            }
+        }
+
+        function formatDateString(dateStr) {
+            if(!dateStr) return "N/A";
+            const d = new Date(dateStr);
+            if(isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        // 5. INFRASTRUCTURE PROGRESS BAR
+        function updateProgressBar() {
+            const pId = document.getElementById('projectSelect').value;
+            const val = document.getElementById('progressRange').value;
+            document.getElementById('progressText').innerText = val + "% Complete";
+            projectData[pId].progress = val;
+        }
+
+        // 6. ATTENDANCE & LABOR LOGIC
+        function logLaborCost() {
+            const heads = parseInt(document.getElementById('workerHeadcount').value) || 0;
+            const rate = parseFloat(document.getElementById('workerRate').value) || 0;
+            const totalWage = heads * rate;
+            
+            if(totalWage <= 0) return;
+            
+            const pId = document.getElementById('projectSelect').value;
+            projectData[pId].items.push({
+                n: `Daily Labor Wage (${heads} Workers x ${rate} THB)`,
+                a: totalWage
+            });
+            switchProject();
+            openTab('report');
+        }
+
+        // 7. CORE PROJECT SYNCHRONIZER & VIEW CONTROLLER
+        function switchProject() {
+            const pId = document.getElementById('projectSelect').value;
+            const data = projectData[pId];
+            
+            document.getElementById('globalDobDisplay').innerText = formatDateString(data.dob);
+            document.getElementById('reportProjectDob').innerText = formatDateString(data.dob);
+            document.getElementById('dobInput').value = data.dob;
+            document.getElementById('reportTitle').innerText = data.title;
+            
+            // Progress Bar Restore Sync
+            document.getElementById('progressRange').value = data.progress || 50;
+            document.getElementById('progressText').innerText = (data.progress || 50) + "% Complete";
+            
+            const itemsContainer = document.getElementById('reportItems');
+            itemsContainer.innerHTML = '';
+            let total = 0;
+
+            data.items.forEach((item, index) => {
+                total += item.a;
+                itemsContainer.innerHTML += `
+                    <div class="flex justify-between items-center text-xs p-3 bg-slate-50 rounded-xl border border-slate-200 shadow-sm mb-2">
+                        <div class="flex-1">
+                            <span class="font-bold text-slate-800 text-sm block mb-1">${item.n}</span>
+                            <span class="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100">${item.a.toLocaleString()} THB</span>
+                        </div>
+                        <div class="flex gap-1.5 ml-2">
+                            <button onclick="editItem(${index})" class="text-blue-600 bg-blue-100 px-2.5 py-1.5 rounded-lg font-bold">Edit</button>
+                            <button onclick="deleteItem(${index})" class="text-rose-600 bg-rose-100 px-2.5 py-1.5 rounded-lg font-bold">Delete</button>
+                        </div>
+                    </div>`;
+            });
+            
+            document.getElementById('projectTotal').innerText = total.toLocaleString() + " THB";
+            cancelEdit();
+        }
+
+        // 8. FINANCIAL POST DATA CONTROLLER
+        function saveData() {
+            const name = document.getElementById('itemName').value.trim();
+            const amount = parseFloat(document.getElementById('itemAmount').value) || 0;
+            const pId = document.getElementById('projectSelect').value;
+            const editIndex = parseInt(document.getElementById('editIndex').value);
+
+            if (!name || amount <= 0) {
+                alert("Please type a valid item name and valid amount.");
+                return;
+            }
+
+            if (editIndex === -1) {
+                projectData[pId].items.push({n: name, a: amount});
+            } else {
+                projectData[pId].items[editIndex] = {n: name, a: amount};
+            }
+            
+            switchProject();
+            cancelEdit();
+            openTab('report');
+        }
+
+        function editItem(index) {
+            const pId = document.getElementById('projectSelect').value;
+            const item = projectData[pId].items[index];
+            
+            document.getElementById('itemName').value = item.n;
+            document.getElementById('itemAmount').value = item.a;
+            document.getElementById('editIndex').value = index;
+            
+            document.getElementById('formIcon').innerText = "✏️";
+            document.getElementById('formHeader').innerText = "Edit Operational Entry";
+            document.getElementById('btnSave').innerText = "✅ Update Log";
+            document.getElementById('btnSave').className = "flex-1 bg-amber-500 text-white font-bold p-3.5 rounded-xl text-xs uppercase tracking-wider";
+            document.getElementById('btnCancel').className = "block bg-slate-400 text-white font-bold p-3.5 rounded-xl text-xs uppercase";
+            
+            openTab('costs');
+        }
+
+        function deleteItem(index) {
+            if (confirm("Permanently delete this entry?")) {
+                const pId = document.getElementById('projectSelect').value;
+                projectData[pId].items.splice(index, 1);
+                switchProject();
+            }
+        }
+
+        function cancelEdit() {
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemAmount').value = '';
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('formIcon').innerText = "📝";
+            document.getElementById('formHeader').innerText = "Financial Cost Log";
+            document.getElementById('btnSave').innerText = "💾 Save Cost Record";
+            document.getElementById('btnSave').className = "flex-1 bg-blue-600 text-white font-bold p-3.5 rounded-xl text-xs uppercase tracking-wider";
+            document.getElementById('btnCancel').className = "hidden";
+        }
+
+        // 9. NATIVE HARDWARE CAMERA ACTIONS
+        async function startCamera() {
+            const video = document.getElementById('cameraVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            try {
+                activeStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                    audio: false
+                });
+                video.srcObject = activeStream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } catch (err) {
+                alert("Camera permission missing or denied.");
+                console.error(err);
+            }
+        }
+
+        function stopCamera() {
+            const video = document.getElementById('cameraVideo');
+            const placeholder = document.getElementById('cameraPlaceholder');
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+                activeStream = null;
+            }
+            if(video) {
+                video.classList.add('hidden');
+                video.srcObject = null;
+            }
+            if(placeholder) { lod=true; placeholder.classList.remove('hidden'); }
+        }
+
+        // 10. PDF EXPORT COMPILER
+        function exportToPDF() {
+            const element = document.getElementById('pdfReport');
+            const pId = document.getElementById('projectSelect').value;
+            const title = projectData[pId].title;
+            
+            const opt = {
+                margin:       12,
+                filename:     title.replace(/[^a-zA-Z0-9]/g, "_") + '.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        window.onload = function() {
+            calculateMaterials();
+            switchProject();
+            document.getElementById('reportDate').innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+    </script>
+</body>
+</html>
